@@ -33,11 +33,12 @@ scatter(idx1, p(idx1), 'r', 'filled', 'DisplayName', 'Class 1 (FMA)');
 title('Predicted Probabilities');
 xlabel('Patient Index');
 ylabel('Probability (p)');
-yline(0.5, '--k', 'Threshold = 0.5', 'HandleVisibility', 'off');
+yline(0.0, '--k', 'Threshold = 0.0', 'HandleVisibility', 'off');
 legend('Location', 'best');
 hold off;
-% Save the figure to a file
-saveas(gcf, 'images/full_reg.png');
+% Save the figure to a file with a white background at print resolution
+set(gcf, 'color', 'w');
+print(gcf, '-dpng', '-r350', 'images/full_reg.png');
 
 
 % This was the number with the best results (ironically)
@@ -56,12 +57,12 @@ if exist('geneNames', 'var')
     T = table(iSel, selected_genes, weights, 'VariableNames', {'Index', 'GeneSymbol', 'Weight'});
     disp('Table of 30 Selected Attributes:');
     disp(T);
-    
+
     % Export to CSV
     idx1_all = find(b == 1);
     idx0_all = find(b == 0);
     ordered_indices = [idx1_all; idx0_all];
-    
+
     header = {'Marcador'};
     for i = 1:length(idx1_all)
         header{end+1} = sprintf('PacienteFMA%d', i);
@@ -69,11 +70,11 @@ if exist('geneNames', 'var')
     for i = 1:length(idx0_all)
         header{end+1} = sprintf('PacienteHealthy%d', i);
     end
-    
+
     Ar_ordered = Ar(:, ordered_indices);
     csv_data = cell(n_attr + 1, length(header));
     csv_data(1,:) = header;
-    
+
     for i = 1:n_attr
         if iscell(selected_genes)
             csv_data{i+1, 1} = selected_genes{i};
@@ -84,7 +85,7 @@ if exist('geneNames', 'var')
             csv_data{i+1, j+1} = Ar_ordered(i, j);
         end
     end
-    
+
     writecell(csv_data, 'expressao_genes_reduzidos.csv');
     fprintf('Exported reduced matrix with genes and patients to expressao_genes_reduzidos.csv\n');
 end
@@ -99,12 +100,14 @@ scatter(idx1, pr(idx1), 'r', 'filled', 'DisplayName', 'Class 1 (FMA)');
 title('Predicted Probabilities - Attribute selection');
 xlabel('Patient Index');
 ylabel('Probability (p)');
-yline(0.5, '--k', 'Threshold = 0.5', 'HandleVisibility', 'off');
+yline(0.0, '--k', 'Threshold = 0.0', 'HandleVisibility', 'off');
 legend('Location', 'best');
 hold off;
-% Save the figure to a file
-saveas(gcf, 'images/reduced_reg.png');
+% Save the figure to a file with a white background at print resolution
+set(gcf, 'color', 'w');
+print(gcf, '-dpng', '-r350', 'images/reduced_reg.png');
 
 % Save the reduced matrix
 save('reduced_fibro_dataset.mat','Ar');
 fprintf('Saved Ar to reduced_fibro_dataset.mat\n');
+
