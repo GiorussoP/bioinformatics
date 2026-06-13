@@ -82,6 +82,60 @@ print("\n--- Resultados da Classificação Segura (Hold-out Test) ---")
 print(f"Acurácia no conjunto de teste: {acc_svd * 100:.2f}%\n")
 print(classification_report(y_test, y_pred_svd, target_names=['Healthy', 'FMA']))
 
+
+
+
+# ==================== COMPARAÇÃO COM OUTROS MÉTODOS ====================
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
+from sklearn.model_selection import GridSearchCV
+
+# Dicionário para armazenar resultados
+results = {
+    'Proposed (LogReg+SVD)': {'accuracy': None, 'precision': None, 'recall': None, 'f1': None},
+    'Random Forest': {'accuracy': None, 'precision': None, 'recall': None, 'f1': None},
+    'SVM (RBF)': {'accuracy': None, 'precision': None, 'recall': None, 'f1': None}
+}
+
+# 1. Método Proposto (já treinado no pipeline)
+y_pred_proposed = pipeline.predict(X_test)
+results['Proposed (LogReg+SVD)']['accuracy'] = accuracy_score(y_test, y_pred_proposed)
+from sklearn.metrics import precision_score, recall_score, f1_score
+results['Proposed (LogReg+SVD)']['precision'] = precision_score(y_test, y_pred_proposed, pos_label=1)
+results['Proposed (LogReg+SVD)']['recall'] = recall_score(y_test, y_pred_proposed, pos_label=1)
+results['Proposed (LogReg+SVD)']['f1'] = f1_score(y_test, y_pred_proposed, pos_label=1)
+
+# 2. Random Forest (com otimização simples)
+rf = RandomForestClassifier(random_state=42, class_weight='balanced')
+param_rf = {'n_estimators': [50, 100], 'max_depth': [5, 10, None]}
+grid_rf = GridSearchCV(rf, param_rf, cv=3, scoring='accuracy')
+grid_rf.fit(X_train, y_train)
+best_rf = grid_rf.best_estimator_
+y_pred_rf = best_rf.predict(X_test)
+results['Random Forest']['accuracy'] = accuracy_score(y_test, y_pred_rf)
+results['Random Forest']['precision'] = precision_score(y_test, y_pred_rf, pos_label=1)
+results['Random Forest']['recall'] = recall_score(y_test, y_pred_rf, pos_label=1)
+results['Random Forest']['f1'] = f1_score(y_test, y_pred_rf, pos_label=1)
+
+# 3. SVM com kernel RBF
+svm = SVC(random_state=42, class_weight='balanced', probability=True)
+param_svm = {'C': [0.1, 1, 10], 'gamma': ['scale', 'auto']}
+grid_svm = GridSearchCV(svm, param_svm, cv=3, scoring='accuracy')
+grid_svm.fit(X_train, y_train)
+best_svm = grid_svm.best_estimator_
+y_pred_svm = best_svm.predict(X_test)
+results['SVM (RBF)']['accuracy'] = accuracy_score(y_test, y_pred_svm)
+results['SVM (RBF)']['precision'] = precision_score(y_test, y_pred_svm, pos_label=1)
+results['SVM (RBF)']['recall'] = recall_score(y_test, y_pred_svm, pos_label=1)
+results['SVM (RBF)']['f1'] = f1_score(y_test, y_pred_svm, pos_label=1)
+
+# Exibir tabela comparativa
+print("\n=== COMPARAÇÃO DE MÉTODOS (Hold‑out Test) ===")
+print(f"{'Método':<20} {'Acurácia':<10} {'Precisão':<10} {'Recall':<10} {'F1':<10}")
+for name, metrics in results.items():
+    print(f"{name:<20} {metrics['accuracy']:.4f}     {metrics['precision']:.4f}     {metrics['recall']:.4f}     {metrics['f1']:.4f}")
+
+
 # 7. Validação Cruzada de 5 Folds com blindagem total contra vazamento de dados
 cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 scores = cross_val_score(pipeline, X, y, cv=cv, scoring='accuracy')
